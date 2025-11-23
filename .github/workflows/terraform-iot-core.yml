@@ -1,44 +1,34 @@
-name: cet11-grp1 IoT Core Terraform CI/CD
+name: Terraform CI/CD - AWS IoT Core
 
 on:
   push:
     branches:
-      - main
       - dev
+      - main
     paths:
-      - "*.tf"
-      - "lambda/**"
-      - ".github/workflows/**"
+      - "terraform/**"
+      - "lambda_src/**"
+      - ".github/workflows/terraform-iot-core.yml"
   pull_request:
     branches:
-      - main
       - dev
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: "Environment to deploy (dev or prod)"
-        required: true
-        default: "dev"
+      - main
+    paths:
+      - "terraform/**"
+      - "lambda_src/**"
 
 env:
-  AWS_REGION: ${{ secrets.AWS_REGION }}
+  AWS_REGION: ap-southeast-1
 
 jobs:
-  terraform-ci:
-    name: Terraform CI (fmt, validate, plan)
+  terraform-dev:
+    name: "Terraform - dev"
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        environment: [dev, prod]
+    if: github.ref == 'refs/heads/dev'
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.9.0
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -47,45 +37,35 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Select/Create Workspace
-        run: |
-          terraform workspace select ${{ matrix.environment }} || terraform workspace new ${{ matrix.environment }}
-
-      - name: Terraform FMT Check
-        run: terraform fmt -check -recursive
-
-      - name: Terraform Validate
-        run: terraform validate
-
-      - name: Terraform Plan
-        run: terraform plan -input=false -var="aws_region=${{ env.AWS_REGION }}"
-
-  terraform-apply:
-    name: Terraform Apply (CD)
-    runs-on: ubuntu-latest
-    needs: terraform-ci
-    strategy:
-      matrix:
-        environment: [dev, prod]
-
-    # Only apply:
-    # - for push to main, OR
-    # - manual dispatch (workflow_dispatch)
-    if: >
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'push' && github.ref == 'refs/heads/main')
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.9.0
+
+      - name: Terraform fmt
+        run: terraform -chdir=terraform/dev fmt -check
+
+      - name: Terraform init
+        run: terraform -chdir=terraform/dev init
+
+      - name: Terraform validate
+        run: terraform -chdir=terraform/dev validate
+
+      - name: Terraform plan
+        run: terraform -chdir=terraform/dev plan
+
+      - name: Terraform apply (push only)
+        if: github.event_name == 'push'
+        run: terraform -chdir=terraform/dev apply -auto-approve
+
+  terraform-prod:
+    name: "Terraform - prod"
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -94,12 +74,23 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Terraform Init
-        run: terraform init
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
 
-      - name: Select/Create Workspace
-        run: |
-          terraform workspace select ${{ matrix.environment }} || terraform workspace new ${{ matrix.environment }}
+      - name: Terraform fmt
+        run: terraform -chdir=terraform/prod fmt -check
 
-      - name: Terraform Apply
-        run: terraform apply -auto-approve -input=false -var="aws_region=${{ env.AWS_REGION }}"
+      - name: Terraform init
+        run: terraform -chdir=terraform/prod init
+
+      - name: Terraform validate
+        run: terraform -chdir=terraform/prod validate
+
+      - name: Terraform plan
+        run: terraform -chdir=terraform/prod plan
+
+      - name: Terraform apply (push only)
+        if: github.event_name == 'push'
+        run: terraform -chdir=terraform/prod apply -auto-approve
