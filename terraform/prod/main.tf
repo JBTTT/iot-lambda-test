@@ -3,10 +3,10 @@ provider "aws" {
 }
 
 module "lambda_sns" {
-  source       = "../modules/lambda_sns"
-  name_prefix  = var.name_prefix
-  env          = var.env
-  alert_email  = "perseverancejb@hotmail.com"
+  source      = "../modules/lambda_sns"
+  name_prefix = var.name_prefix
+  env         = var.env
+  alert_email = "perseverancejb@hotmail.com"
 
   lambda_s3_bucket = ""
   lambda_s3_key    = ""
