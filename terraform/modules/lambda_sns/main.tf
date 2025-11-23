@@ -38,6 +38,16 @@ resource "aws_iam_role" "lambda_role" {
   })
 }
 
+resource "aws_sns_topic" "alerts" {
+  name = "${local.base_name}-iot-alerts"
+}
+
+resource "aws_sns_topic_subscription" "alerts_email" {
+  topic_arn = aws_sns_topic.alerts.arn
+  protocol  = "email"
+  endpoint  = var.alert_email
+}
+
 resource "aws_iam_role_policy" "lambda_policy" {
   name = "${local.base_name}-lambda-policy"
   role = aws_iam_role.lambda_role.id
@@ -63,39 +73,6 @@ resource "aws_iam_role_policy" "lambda_policy" {
       }
     ]
   })
-}
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents"
-        ]
-        Resource = "arn:aws:logs:*:*:*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "sns:Publish"
-        ]
-        Resource = aws_sns_topic.alerts.arn
-      }
-    ]
-  })
-}
-
-resource "aws_sns_topic" "alerts" {
-  name = "${local.base_name}-iot-alerts"
-}
-
-resource "aws_sns_topic_subscription" "alerts_email" {
-  topic_arn = aws_sns_topic.alerts.arn
-  protocol  = "email"
-  endpoint  = var.alert_email
 }
 
 resource "aws_lambda_function" "iot_alert" {
