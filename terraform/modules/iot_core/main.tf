@@ -12,12 +12,11 @@ locals {
 }
 
 resource "aws_iot_topic_rule" "temperature_to_lambda" {
-  name        = "${local.base_name}-iot-rule"
+  name        = "${replace(local.base_name, "-", "_")}_iot_rule"
   description = "Route IoT messages to Lambda for alerts"
   enabled     = true
   sql_version = "2016-03-23"
 
-  # All messages from the specified topic go to the Lambda
   sql = "SELECT * FROM '${var.iot_topic}'"
 
   lambda {
