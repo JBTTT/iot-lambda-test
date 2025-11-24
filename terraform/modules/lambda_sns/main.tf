@@ -93,3 +93,4 @@ resource "aws_lambda_function" "iot_alert" {
     }
   }
 }
+
