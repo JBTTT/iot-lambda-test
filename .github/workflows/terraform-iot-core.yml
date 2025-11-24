@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - dev
+      - prod
+      - main
     paths:
       - "terraform/**"
       - "lambda_src/**"
