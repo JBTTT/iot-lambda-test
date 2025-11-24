@@ -4,14 +4,12 @@ on:
   push:
     branches:
       - dev
-      - main
     paths:
       - "terraform/**"
       - "lambda_src/**"
       - ".github/workflows/terraform-iot-core.yml"
   pull_request:
     branches:
-      - dev
       - main
     paths:
       - "terraform/**"
