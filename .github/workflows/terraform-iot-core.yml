@@ -11,6 +11,7 @@ on:
   pull_request:
     branches:
       - main
+      - prod
     paths:
       - "terraform/**"
       - "lambda_src/**"
