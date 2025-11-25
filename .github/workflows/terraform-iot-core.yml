@@ -4,24 +4,21 @@ on:
   push:
     branches:
       - dev
-      - prod
-      - main
     paths:
       - "terraform/**"
       - "lambda_src/**"
       - ".github/workflows/terraform-iot-core.yml"
-  pull_request:
-    branches:
-      - main
-      - prod
-    paths:
-      - "terraform/**"
-      - "lambda_src/**"
+
+  workflow_dispatch:   # Manual trigger for prod only
 
 env:
   AWS_REGION: us-east-1
 
 jobs:
+
+  # -----------------------------
+  # DEV ENVIRONMENT DEPLOYMENT
+  # -----------------------------
   terraform-dev:
     name: "Terraform - dev"
     runs-on: ubuntu-latest
@@ -41,8 +38,8 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.9.0
-
+          terraform_version: 1.9.5
+      
       - name: Terraform fmt
         run: terraform -chdir=terraform/dev fmt -recursive
 
@@ -55,14 +52,18 @@ jobs:
       - name: Terraform plan
         run: terraform -chdir=terraform/dev plan
 
-      - name: Terraform apply (push only)
+      - name: Terraform apply
         if: github.event_name == 'push'
         run: terraform -chdir=terraform/dev apply -auto-approve
 
+
+  # -----------------------------
+  # PROD ENVIRONMENT (MANUAL ONLY)
+  # -----------------------------
   terraform-prod:
     name: "Terraform - prod"
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch'   # Manual trigger ONLY
 
     steps:
       - name: Checkout
@@ -78,10 +79,10 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.9.0
+          terraform_version: 1.9.5
 
       - name: Terraform fmt
-        run: terraform -chdir=terraform/prod fmt -check
+        run: terraform -chdir=terraform/prod fmt -recursive
 
       - name: Terraform init
         run: terraform -chdir=terraform/prod init
@@ -92,8 +93,5 @@ jobs:
       - name: Terraform plan
         run: terraform -chdir=terraform/prod plan
 
-      - name: Terraform apply (push only)
-        if: github.event_name == 'push'
+      - name: Terraform apply
         run: terraform -chdir=terraform/prod apply -auto-approve
-
-        
