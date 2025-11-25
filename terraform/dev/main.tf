@@ -18,11 +18,12 @@ locals {
 # --------------------------------------------
 module "lambda_sns" {
   source       = "../modules/lambda_sns"
+  providers = {
+    aws = aws
+  }
   name_prefix  = local.name_prefix
   env          = local.env
   alert_email  = "perseverancejb@hotmail.com"
-
-  # Using local archive packaging (no S3)
   lambda_s3_bucket = ""
   lambda_s3_key    = ""
 }
@@ -32,12 +33,13 @@ module "lambda_sns" {
 # --------------------------------------------
 module "iot_core" {
   source              = "../modules/iot_core"
+  providers = {
+    aws = aws
+  }
   name_prefix         = local.name_prefix
   env                 = local.env
   lambda_function_arn = module.lambda_sns.lambda_function_arn
-
-  # DEV MQTT Topic
-  iot_topic = "cet11/grp1/dev/telemetry"
+  iot_topic           = "cet11/grp1/dev/telemetry"
 }
 
 # --------------------------------------------
