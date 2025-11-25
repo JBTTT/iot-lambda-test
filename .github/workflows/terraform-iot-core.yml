@@ -1,98 +1,98 @@
-name: Terraform CI/CD - AWS IoT Core
+name: Terraform CI/CD - IoT Lambda SNS
 
 on:
   push:
     branches:
-      - dev
+      - dev          # Auto-deploy to DEV
     paths:
       - "terraform/**"
       - "lambda_src/**"
-      - ".github/workflows/terraform-iot-core.yml"
+      - ".github/workflows/terraform-ci-cd.yml"
 
-  workflow_dispatch:   # Manual trigger for prod only
+  workflow_dispatch:   # Manual trigger to deploy PROD
 
 env:
   AWS_REGION: us-east-1
 
 jobs:
 
-  # -----------------------------
-  # DEV ENVIRONMENT DEPLOYMENT
-  # -----------------------------
+  ###############################################
+  # DEV ENVIRONMENT (AUTO-DEPLOY FROM dev BRANCH)
+  ###############################################
   terraform-dev:
-    name: "Terraform - dev"
+    name: "Terraform Apply - DEV"
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/dev'
 
     steps:
-      - name: Checkout
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
+      - name: Configure AWS Credentials (DEV)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.9.5
-      
-      - name: Terraform fmt
-        run: terraform -chdir=terraform/dev fmt -recursive
+          terraform-version: 1.9.5
 
-      - name: Terraform init
+      - name: Terraform Init (DEV)
         run: terraform -chdir=terraform/dev init
 
-      - name: Terraform validate
+      - name: Terraform Format (DEV)
+        run: terraform -chdir=terraform/dev fmt -recursive
+
+      - name: Terraform Validate (DEV)
         run: terraform -chdir=terraform/dev validate
 
-      - name: Terraform plan
+      - name: Terraform Plan (DEV)
         run: terraform -chdir=terraform/dev plan
 
-      - name: Terraform apply
+      - name: Terraform Apply (DEV)
         if: github.event_name == 'push'
         run: terraform -chdir=terraform/dev apply -auto-approve
 
 
-  # -----------------------------
-  # PROD ENVIRONMENT (MANUAL ONLY)
-  # -----------------------------
+
+  ###################################################
+  # PROD ENVIRONMENT (MANUAL DEPLOY ONLY - SAFE MODE)
+  ###################################################
   terraform-prod:
-    name: "Terraform - prod"
+    name: "Terraform Apply - PROD"
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'   # Manual trigger ONLY
+    if: github.event_name == 'workflow_dispatch'    # Manual trigger only
 
     steps:
-      - name: Checkout
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
+      - name: Configure AWS Credentials (PROD)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.9.5
+          terraform-version: 1.9.5
 
-      - name: Terraform fmt
-        run: terraform -chdir=terraform/prod fmt -recursive
-
-      - name: Terraform init
+      - name: Terraform Init (PROD)
         run: terraform -chdir=terraform/prod init
 
-      - name: Terraform validate
+      - name: Terraform Format (PROD)
+        run: terraform -chdir=terraform/prod fmt -recursive
+
+      - name: Terraform Validate (PROD)
         run: terraform -chdir=terraform/prod validate
 
-      - name: Terraform plan
+      - name: Terraform Plan (PROD)
         run: terraform -chdir=terraform/prod plan
 
-      - name: Terraform apply
+      - name: Terraform Apply (PROD)
         run: terraform -chdir=terraform/prod apply -auto-approve
-
