@@ -1,6 +1,7 @@
 terraform {
   required_version = ">= 1.6.0"
 
+terraform {
   backend "s3" {
     bucket         = "cet11-grp1-terraform-state"
     key            = "dev/iot-core/terraform.tfstate"
@@ -8,6 +9,7 @@ terraform {
     dynamodb_table = "cet11-grp1-terraform-lock"
     encrypt        = true
   }
+}
 
   required_providers {
     aws = {
