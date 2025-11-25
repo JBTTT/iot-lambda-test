@@ -95,3 +95,5 @@ jobs:
       - name: Terraform apply (push only)
         if: github.event_name == 'push'
         run: terraform -chdir=terraform/prod apply -auto-approve
+
+        
