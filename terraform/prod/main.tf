@@ -9,8 +9,8 @@ provider "aws" {
 }
 
 locals {
-  env         = var.env
-  name_prefix = var.name_prefix
+  env         = var.env            # "prod"
+  name_prefix = var.name_prefix    # "cet11-grp1"
 }
 
 # --------------------------------------------
@@ -22,7 +22,7 @@ module "lambda_sns" {
   env          = local.env
   alert_email  = "perseverancejb@hotmail.com"
 
-  # Using local archive packaging (no S3)
+  # Lambda packaged locally
   lambda_s3_bucket = ""
   lambda_s3_key    = ""
 }
@@ -36,12 +36,12 @@ module "iot_core" {
   env                 = local.env
   lambda_function_arn = module.lambda_sns.lambda_function_arn
 
-  # PROD MQTT Topic
+  # PROD MQTT Topic (fully isolated)
   iot_topic = "cet11/grp1/prod/telemetry"
 }
 
 # --------------------------------------------
-# Allow IoT Rule to Invoke Lambda
+# Allow IoT Rule to Invoke Lambda (PROD)
 # --------------------------------------------
 resource "aws_lambda_permission" "allow_iot" {
   statement_id  = "AllowExecutionFromIotCore"
