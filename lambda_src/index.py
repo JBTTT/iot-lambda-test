@@ -41,3 +41,4 @@ def handler(event, context):
     except Exception as e:
         print("Error publishing to SNS:", str(e))
         return {"statusCode": 500, "body": "Error publishing to SNS"}
+
